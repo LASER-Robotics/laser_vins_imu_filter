@@ -72,10 +72,13 @@ namespace vins_imu_filter
 
         /* SUBSCRIBERS //{ */
         rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
+        rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_accel_;
+        rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_gyro_;
         /*//}*/
 
         /* PUBLISHERS //{ */
         rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::Imu>::SharedPtr pub_imu_;
+        rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::Imu>::SharedPtr pub_accel_gyro_;
         /*//}*/
 
         /* TIMERS //{ */
@@ -86,12 +89,17 @@ namespace vins_imu_filter
 
         /* subImuCallback() //{ */
         void subImuCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
+        void accelCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
+        void gyroCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
         /*//}*/
 
         /*//}*/
 
         /* VARIABLES //{ */
         bool is_initialized_{false};
+        bool acc_received_{false};
+        bool gyro_received_{false};
+        bool imu_received_{false};
 
         rclcpp::Publisher<geometry_msgs::msg::TransformStamped>::SharedPtr tf_broadcaster_;
         bool _acc_iir_enable_;
@@ -114,10 +122,17 @@ namespace vins_imu_filter
 
         std::unique_ptr<laser_uav_lib::ImuFilter> imu_filter_;
 
+        sensor_msgs::msg::Imu last_accel_msg_;
+        std::mutex mutex_last_accel_msg_;
+
+        sensor_msgs::msg::Imu last_gyro_msg_;
+
         /*//}*/
 
         /* FUNCTIONS //{ */
         void initializeFilter();
+        laser_uav_lib::ImuData convertToImuData(const sensor_msgs::msg::Imu &imu_msg);
+        sensor_msgs::msg::Imu convertToSensorMsg(const laser_uav_lib::ImuData &imu_data);
 
         /*//}*/
     };

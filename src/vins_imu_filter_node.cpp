@@ -66,6 +66,7 @@ namespace vins_imu_filter
 
         // Activate publishers (if any)
         pub_imu_->on_activate();
+        pub_accel_gyro_->on_activate();
 
         // Activate subscribers
 
@@ -81,6 +82,7 @@ namespace vins_imu_filter
 
         // Deactivate publishers (if any)
         pub_imu_->on_deactivate();
+        pub_accel_gyro_->on_deactivate();
 
         RCLCPP_INFO(get_logger(), "VINS IMU Filter Node deactivated.");
         return CallbackReturn::SUCCESS;
@@ -94,6 +96,7 @@ namespace vins_imu_filter
 
         // Reset publishers
         pub_imu_.reset();
+        pub_accel_gyro_.reset();
 
         // Reset subscribers
         sub_imu_.reset();
@@ -225,11 +228,20 @@ namespace vins_imu_filter
 
         // Subscriber for IMU data
         sub_imu_ = create_subscription<sensor_msgs::msg::Imu>(
-            "/uav1/rgbd/imu", rclcpp::QoS(10).best_effort(),
+            "imu_in", rclcpp::QoS(10).best_effort(),
             std::bind(&VinsImuFilter::subImuCallback, this, std::placeholders::_1));
 
+        sub_gyro_ = create_subscription<sensor_msgs::msg::Imu>(
+            "gyro_in", rclcpp::QoS(10).best_effort(),
+            std::bind(&VinsImuFilter::gyroCallback, this, std::placeholders::_1));
+
+        sub_accel_ = create_subscription<sensor_msgs::msg::Imu>(
+            "accel_in", rclcpp::QoS(10).best_effort(),
+            std::bind(&VinsImuFilter::accelCallback, this, std::placeholders::_1));
+
         // Publisher for TF
-        pub_imu_ = create_publisher<sensor_msgs::msg::Imu>("/uav1/rgbd/imu_filtered", 10);
+        pub_imu_ = create_publisher<sensor_msgs::msg::Imu>("imu_out", 10);
+        pub_accel_gyro_ = create_publisher<sensor_msgs::msg::Imu>("accel_gyro_out", 10);
 
         RCLCPP_INFO(get_logger(), "Publishers and subscribers configured.");
     }
@@ -290,23 +302,14 @@ namespace vins_imu_filter
 
         RCLCPP_DEBUG(get_logger(), "Received IMU message");
 
-        laser_uav_lib::ImuData imu_data;
-        imu_data.linear_acceleration_x = msg->linear_acceleration.x;
-        imu_data.linear_acceleration_y = msg->linear_acceleration.y;
-        imu_data.linear_acceleration_z = msg->linear_acceleration.z;
-        imu_data.angular_velocity_x = msg->angular_velocity.x;
-        imu_data.angular_velocity_y = msg->angular_velocity.y;
-        imu_data.angular_velocity_z = msg->angular_velocity.z;
+        // Usando as funções de conversão
+        laser_uav_lib::ImuData imu_data = convertToImuData(*msg);
 
+        // Filtrar os dados
         laser_uav_lib::ImuData filtered_imu_data = imu_filter_->filter(imu_data);
 
-        sensor_msgs::msg::Imu filtered_msg = *msg; // Copy the original message
-        filtered_msg.linear_acceleration.x = filtered_imu_data.linear_acceleration_x;
-        filtered_msg.linear_acceleration.y = filtered_imu_data.linear_acceleration_y;
-        filtered_msg.linear_acceleration.z = filtered_imu_data.linear_acceleration_z;
-        filtered_msg.angular_velocity.x = filtered_imu_data.angular_velocity_x;
-        filtered_msg.angular_velocity.y = filtered_imu_data.angular_velocity_y;
-        filtered_msg.angular_velocity.z = filtered_imu_data.angular_velocity_z;
+        // Converter de volta para mensagem ROS
+        sensor_msgs::msg::Imu filtered_msg = convertToSensorMsg(filtered_imu_data);
 
         if (_change_frame_id_enabled_)
         {
@@ -317,5 +320,150 @@ namespace vins_imu_filter
         RCLCPP_DEBUG(get_logger(), "Published filtered IMU message");
     }
     /*//}*/
+
+    /**
+     * @brief Callback function for accelerometer data
+     * @param msg The accelerometer message
+     * @details This function filters the accelerometer data and publishes the filtered message.
+     *          It also updates the frame ID if the change_frame_id_enabled_ parameter is set.
+     *          The filtered message is published at a rate of 1 Hz.
+     */
+    /* accelCallback() //{ */
+    void VinsImuFilter::accelCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
+    {
+        if (!is_initialized_)
+        {
+            RCLCPP_WARN_ONCE(get_logger(), "IMU Filter not fully initialized yet.");
+            return;
+        }
+
+        RCLCPP_DEBUG(get_logger(), "Received accelerometer message");
+
+        acc_received_ = true;
+        laser_uav_lib::ImuData imu_data = convertToImuData(*msg);
+        sensor_msgs::msg::Imu filtered_msg = convertToSensorMsg(imu_filter_->filterAccelerometer(imu_data));
+
+        if (_change_frame_id_enabled_)
+        {
+            filtered_msg.header.frame_id = _frame_id_;
+        }
+        {
+            std::scoped_lock lock(mutex_last_accel_msg_);
+            last_accel_msg_ = filtered_msg;
+        }
+
+        RCLCPP_INFO_THROTTLE(
+            get_logger(),
+            *get_clock(), // Adicionar o clock como segundo argumento
+            1000,         // Período em milissegundos (1.0 segundo = 1000 ms)
+            "Filtered accelerometer message salved");
+    }
+    /*//}*/
+
+    /**
+     * @brief Callback function for gyroscope data
+     * @param msg The gyroscope message
+     * @details This function filters the gyroscope data and publishes the filtered message.
+     *          It also updates the frame ID if the change_frame_id_enabled_ parameter is set.
+     *          The filtered message is published at a rate of 1 Hz.
+     * @note This function is called when a gyroscope message is received.
+     * @warning This function assumes that the IMU filter is fully initialized.
+     */
+    /* gyroCallback() //{ */
+    void VinsImuFilter::gyroCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
+    {
+        if (!is_initialized_)
+        {
+            RCLCPP_WARN_ONCE(get_logger(), "IMU Filter not fully initialized yet.");
+            return;
+        }
+
+        RCLCPP_DEBUG(get_logger(), "Received gyroscope message");
+
+        gyro_received_ = true;
+
+        laser_uav_lib::ImuData imu_data = convertToImuData(*msg);
+        sensor_msgs::msg::Imu filtered_msg = convertToSensorMsg(imu_filter_->filterGyro(imu_data));
+
+        if (_change_frame_id_enabled_)
+        {
+            filtered_msg.header.frame_id = _frame_id_;
+        }
+        {
+            std::scoped_lock lock(mutex_last_accel_msg_);
+            filtered_msg.linear_acceleration = last_accel_msg_.linear_acceleration;
+        }
+
+        RCLCPP_INFO_THROTTLE(
+            get_logger(),
+            *get_clock(), // Adicionar o clock como segundo argumento
+            1000,         // Período em milissegundos (1.0 segundo = 1000 ms)
+            "Filtered gyroscope message published");
+
+        pub_accel_gyro_->publish(filtered_msg);
+    }
+    /*//}*/
+
+    laser_uav_lib::ImuData VinsImuFilter::convertToImuData(const sensor_msgs::msg::Imu &imu_msg)
+    {
+        laser_uav_lib::ImuData imu_data;
+
+        // Copiar aceleração
+        imu_data.linear_acceleration_x = imu_msg.linear_acceleration.x;
+        imu_data.linear_acceleration_y = imu_msg.linear_acceleration.y;
+        imu_data.linear_acceleration_z = imu_msg.linear_acceleration.z;
+
+        // Copiar giroscópio (se necessário)
+        imu_data.angular_velocity_x = imu_msg.angular_velocity.x;
+        imu_data.angular_velocity_y = imu_msg.angular_velocity.y;
+        imu_data.angular_velocity_z = imu_msg.angular_velocity.z;
+
+        // Copiar timestamp (se necessário)
+        imu_data.timestamp = imu_msg.header.stamp.sec + imu_msg.header.stamp.nanosec * 1e-9;
+
+        return imu_data;
+    }
+
+    sensor_msgs::msg::Imu VinsImuFilter::convertToSensorMsg(const laser_uav_lib::ImuData &imu_data)
+    {
+        sensor_msgs::msg::Imu imu_msg;
+
+        // Configurar cabeçalho
+        imu_msg.header.stamp = rclcpp::Time(static_cast<int64_t>(imu_data.timestamp * 1e9)); // converte segundos para nanosegundos
+        imu_msg.header.frame_id = imu_data.frame_id;
+
+        // Orientação (quaternion)
+        imu_msg.orientation.x = imu_data.orientation[0];
+        imu_msg.orientation.y = imu_data.orientation[1];
+        imu_msg.orientation.z = imu_data.orientation[2];
+        imu_msg.orientation.w = imu_data.orientation[3];
+
+        // Matriz de covariância da orientação (row-major)
+        std::copy(imu_data.orientation_covariance.begin(),
+                  imu_data.orientation_covariance.end(),
+                  imu_msg.orientation_covariance.begin());
+
+        // Velocidade angular
+        imu_msg.angular_velocity.x = imu_data.angular_velocity_x;
+        imu_msg.angular_velocity.y = imu_data.angular_velocity_y;
+        imu_msg.angular_velocity.z = imu_data.angular_velocity_z;
+
+        // Matriz de covariância da velocidade angular
+        std::copy(imu_data.angular_velocity_covariance.begin(),
+                  imu_data.angular_velocity_covariance.end(),
+                  imu_msg.angular_velocity_covariance.begin());
+
+        // Aceleração linear
+        imu_msg.linear_acceleration.x = imu_data.linear_acceleration_x;
+        imu_msg.linear_acceleration.y = imu_data.linear_acceleration_y;
+        imu_msg.linear_acceleration.z = imu_data.linear_acceleration_z;
+
+        // Matriz de covariância da aceleração linear
+        std::copy(imu_data.linear_acceleration_covariance.begin(),
+                  imu_data.linear_acceleration_covariance.end(),
+                  imu_msg.linear_acceleration_covariance.begin());
+
+        return imu_msg;
+    }
 
 } // namespace vins_imu_filter
