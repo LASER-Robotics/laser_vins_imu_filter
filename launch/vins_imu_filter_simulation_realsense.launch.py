@@ -35,22 +35,21 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_accel',
-            # default_value=['/', EnvironmentVariable('UAV_NAME'), '/rgbd/accel/sample'],
-            default_value=['/uav5/rgbd/accel/sample'],
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/front_rgbd/accel/sample'],
             description='Name of the accel topic.')
     )
 
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_gyro',
-            default_value=['/uav5/rgbd/gyro/sample'],
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/front_rgbd/gyro/sample'],
             description='Name of the gyro topic.')
     )
 
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_imu_in',
-            default_value=['/uav5/rgbd/imu'],
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/front_rgbd/imu/data'],
             description='Name of the raw IMU input topic.')
     )
 
