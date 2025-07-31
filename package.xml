@@ -2,9 +2,12 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>laser_vins_imu_filter</name>
-  <version>0.0.0</version>
+  <version>1.0.0</version>
   <description>Filtro IMU para dados VINS com opções de filtro IIR e Notch.</description>
-  <maintainer email="wagnergarcia@eng.ci.ufpb.br">wagner</maintainer>
+
+  <author email="wagnergarcia@eng.ci.ufpb.br">wagnerdgarcia</author>
+  <maintainer email="wagnergarcia@eng.ci.ufpb.br">wagnerdgarcia</maintainer>
+
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
@@ -17,7 +20,6 @@
   <depend>tf2_ros</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>Eigen3</depend>
-  <depend>pluginlib</depend>
   <depend>laser_uav_lib</depend>
 
   <test_depend>ament_lint_auto</test_depend>

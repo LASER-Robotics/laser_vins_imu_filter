@@ -9,7 +9,6 @@ namespace vins_imu_filter
     {
         RCLCPP_INFO(get_logger(), "Creating VINS IMU Filter Node");
 
-        // Declare parameters (optional here, can be done in on_configure as well)
         declare_parameter("accelerometer.iir_filter.enable", rclcpp::ParameterValue(false));
         declare_parameter("accelerometer.iir_filter.a", rclcpp::ParameterValue(std::vector<double>{}));
         declare_parameter("accelerometer.iir_filter.b", rclcpp::ParameterValue(std::vector<double>{}));
@@ -28,8 +27,10 @@ namespace vins_imu_filter
         declare_parameter("gyro.notch_filter.frequencies", rclcpp::ParameterValue(std::vector<int>{}));
         declare_parameter("gyro.notch_filter.bandwidth", rclcpp::ParameterValue(50));
 
-        declare_parameter("change_frame_id.enable", false);
-        declare_parameter("change_frame_id.frame_id", std::string("imu_link"));
+        declare_parameter("change_frame_id.enable", rclcpp::ParameterValue(false));
+        declare_parameter("change_frame_id.frame_id", rclcpp::ParameterValue(std::string("imu_link")));
+
+        declare_parameter("imu_data_united", rclcpp::ParameterValue(false));
 
         RCLCPP_INFO(get_logger(), "VINS IMU Filter Node initialized.");
     }
@@ -66,9 +67,6 @@ namespace vins_imu_filter
 
         // Activate publishers (if any)
         pub_imu_->on_activate();
-        pub_accel_gyro_->on_activate();
-
-        // Activate subscribers
 
         RCLCPP_INFO(get_logger(), "VINS IMU Filter Node activated.");
         return CallbackReturn::SUCCESS;
@@ -82,7 +80,6 @@ namespace vins_imu_filter
 
         // Deactivate publishers (if any)
         pub_imu_->on_deactivate();
-        pub_accel_gyro_->on_deactivate();
 
         RCLCPP_INFO(get_logger(), "VINS IMU Filter Node deactivated.");
         return CallbackReturn::SUCCESS;
@@ -96,13 +93,14 @@ namespace vins_imu_filter
 
         // Reset publishers
         pub_imu_.reset();
-        pub_accel_gyro_.reset();
 
         // Reset subscribers
-        sub_imu_.reset();
-
-        // Reset timers
-        // timer_.reset();
+        if (_imu_data_united_){
+          sub_imu_.reset();
+        } else {
+          sub_gyro_.reset();
+          sub_accel_.reset();
+        }
 
         RCLCPP_INFO(get_logger(), "VINS IMU Filter Node cleaned up.");
         return CallbackReturn::SUCCESS;
@@ -217,6 +215,8 @@ namespace vins_imu_filter
             RCLCPP_INFO(get_logger(), "Change Frame ID: %s", _frame_id_.c_str());
         }
 
+        get_parameter("imu_data_united", _imu_data_united_);
+
         RCLCPP_INFO(get_logger(), "Filter parameters loaded.");
     }
     /*//}*/
@@ -226,22 +226,18 @@ namespace vins_imu_filter
     {
         RCLCPP_INFO(get_logger(), "Configuring publishers and subscribers...");
 
-        // Subscriber for IMU data
-        sub_imu_ = create_subscription<sensor_msgs::msg::Imu>(
-            "imu_in", rclcpp::QoS(10).best_effort(),
-            std::bind(&VinsImuFilter::subImuCallback, this, std::placeholders::_1));
+        if (_imu_data_united_) {
+            sub_imu_ = create_subscription<sensor_msgs::msg::Imu>("imu_in", rclcpp::QoS(10).best_effort(),
+                std::bind(&VinsImuFilter::subImuCallback, this, std::placeholders::_1));
+        } else {
+            sub_gyro_ = create_subscription<sensor_msgs::msg::Imu>("gyro_in", rclcpp::QoS(10).best_effort(),
+                std::bind(&VinsImuFilter::subGyroCallback, this, std::placeholders::_1));
 
-        sub_gyro_ = create_subscription<sensor_msgs::msg::Imu>(
-            "gyro_in", rclcpp::QoS(10).best_effort(),
-            std::bind(&VinsImuFilter::gyroCallback, this, std::placeholders::_1));
+            sub_accel_ = create_subscription<sensor_msgs::msg::Imu>("accel_in", rclcpp::QoS(10).best_effort(),
+                std::bind(&VinsImuFilter::subAccelCallback, this, std::placeholders::_1));
+        }
 
-        sub_accel_ = create_subscription<sensor_msgs::msg::Imu>(
-            "accel_in", rclcpp::QoS(10).best_effort(),
-            std::bind(&VinsImuFilter::accelCallback, this, std::placeholders::_1));
-
-        // Publisher for TF
         pub_imu_ = create_publisher<sensor_msgs::msg::Imu>("imu_out", 10);
-        pub_accel_gyro_ = create_publisher<sensor_msgs::msg::Imu>("accel_gyro_out", 10);
 
         RCLCPP_INFO(get_logger(), "Publishers and subscribers configured.");
     }
@@ -328,8 +324,8 @@ namespace vins_imu_filter
      *          It also updates the frame ID if the change_frame_id_enabled_ parameter is set.
      *          The filtered message is published at a rate of 1 Hz.
      */
-    /* accelCallback() //{ */
-    void VinsImuFilter::accelCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
+    /* subAccelCallback() //{ */
+    void VinsImuFilter::subAccelCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
     {
         if (!is_initialized_)
         {
@@ -369,8 +365,8 @@ namespace vins_imu_filter
      * @note This function is called when a gyroscope message is received.
      * @warning This function assumes that the IMU filter is fully initialized.
      */
-    /* gyroCallback() //{ */
-    void VinsImuFilter::gyroCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
+    /* subGyroCallback() //{ */
+    void VinsImuFilter::subGyroCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
     {
         if (!is_initialized_)
         {
@@ -400,7 +396,7 @@ namespace vins_imu_filter
             1000,         // Período em milissegundos (1.0 segundo = 1000 ms)
             "Filtered gyroscope message published");
 
-        pub_accel_gyro_->publish(filtered_msg);
+        pub_imu_->publish(filtered_msg);
     }
     /*//}*/
 

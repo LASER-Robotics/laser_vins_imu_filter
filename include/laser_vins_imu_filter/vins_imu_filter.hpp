@@ -15,13 +15,10 @@
 
 #include <laser_uav_lib/filter/imu_filter.hpp>
 
-/* define //{*/
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
-/*//}*/
 
 namespace vins_imu_filter
 {
-
     class VinsImuFilter : public rclcpp_lifecycle::LifecycleNode
     {
     public:
@@ -78,19 +75,14 @@ namespace vins_imu_filter
 
         /* PUBLISHERS //{ */
         rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::Imu>::SharedPtr pub_imu_;
-        rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::Imu>::SharedPtr pub_accel_gyro_;
-        /*//}*/
-
-        /* TIMERS //{ */
-        // Adicione seus timers aqui, se necessário
         /*//}*/
 
         /* CALLBACKS //{ */
 
         /* subImuCallback() //{ */
         void subImuCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
-        void accelCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
-        void gyroCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
+        void subAccelCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
+        void subGyroCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
         /*//}*/
 
         /*//}*/
@@ -120,6 +112,7 @@ namespace vins_imu_filter
         bool _change_frame_id_enabled_;
         std::string _frame_id_;
 
+        bool _imu_data_united_{false};
         std::unique_ptr<laser_uav_lib::ImuFilter> imu_filter_;
 
         sensor_msgs::msg::Imu last_accel_msg_;

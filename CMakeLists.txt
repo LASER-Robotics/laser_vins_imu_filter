@@ -6,7 +6,7 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
-if(CMAKE_COMPILER_ISlaser_vins_republisherGNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
@@ -20,7 +20,6 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(pluginlib REQUIRED)
 find_package(laser_uav_lib REQUIRED)
 
 set(dependencies
@@ -33,7 +32,6 @@ set(dependencies
   tf2_ros
   tf2_geometry_msgs
   Eigen3
-  pluginlib
 )
 
 find_library(laser_uav_lib laser_uav_lib)
@@ -42,9 +40,6 @@ include_directories(
   include
   ${laser_uav_lib_INCLUDE_DIRS}     
 )
-
-
-############################################ LANDING PLATFORM ############################################################
 
 # Create the executable
 set(executable_name vins_imu_filter)
@@ -76,8 +71,6 @@ target_link_libraries(${executable_name}
 
 # Register the component
 rclcpp_components_register_nodes(${library_name} "vins_imu_filter::VinsImuFilter")
-
-############################################ Installation ############################################################
 
 install(TARGETS ${library_name} ${executable_name}
   ARCHIVE DESTINATION lib
