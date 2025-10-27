@@ -32,6 +32,7 @@ set(dependencies
   tf2_ros
   tf2_geometry_msgs
   Eigen3
+  laser_uav_lib
 )
 
 find_library(laser_uav_lib laser_uav_lib)
@@ -66,7 +67,6 @@ ament_target_dependencies(${library_name}
 # Link the library to the executable
 target_link_libraries(${executable_name}
   ${library_name}
-  laser_uav_lib::filter
 )
 
 # Register the component
