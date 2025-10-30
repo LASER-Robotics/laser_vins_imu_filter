@@ -25,3 +25,5 @@
         sample_rate: 1000 # [Hz]
         frequencies: [100, 200, 300] # [Hz]
         bandwidth: 100 # [Hz]
+    
+    imu_data_united: false
