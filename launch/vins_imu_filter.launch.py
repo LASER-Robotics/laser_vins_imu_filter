@@ -1,6 +1,8 @@
+import os
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, RegisterEventHandler, EmitEvent
-from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, EnvironmentVariable
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, PythonExpression, EnvironmentVariable
 from launch_ros.actions import LifecycleNode
 from launch_ros.substitutions import FindPackageShare
 from launch.events import matches_action
@@ -11,125 +13,104 @@ import lifecycle_msgs.msg
 
 
 def generate_launch_description():
-    # === Declaração de argumentos ===
+    # Declare arguments
     declared_arguments = []
 
     declared_arguments.append(
         DeclareLaunchArgument(
             'namespace',
-            default_value=EnvironmentVariable('UAV_NAME'),
-            description='Top-level namespace for the UAV.'
-        )
-    )
+            default_value=os.getenv('UAV_NAME', "uav1"),
+            description='Top-level namespace.'))
 
     declared_arguments.append(
         DeclareLaunchArgument(
-            'imu_filter_file',
-            default_value=PathJoinSubstitution([
-                FindPackageShare('laser_vins_imu_filter'),
-                'params', 'imu_filter.yaml']),
-            description='Full path to the file with the imu_filter parameters.'
-        )
-    )
+            'use_sim_time',
+            default_value=PythonExpression(['"', os.getenv('REAL_UAV', "true"), '" == "false"']),
+            description='Whether use the simulation time.'))
+
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            'vins_imu_filter_params_file',
+            default_value=PathJoinSubstitution([FindPackageShare('laser_vins_imu_filter'),
+                                                'params', 'rs_d435i.yaml']),
+            description='Full path to the file with the parameters.'))
+
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            'imu_data_united',
+            default_value='True',
+            description='Is the IMU data united (one topic) or separated (accel and gyro topics)?'))
 
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_accel',
-            # default_value=['/', EnvironmentVariable('UAV_NAME'), '/rgbd/accel/sample'],
-            default_value=['/uav5/rgbd/accel/sample'],
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/front_rgbd/accel/sample'],
             description='Name of the accel topic.')
     )
 
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_gyro',
-            default_value=['/uav5/rgbd/gyro/sample'],
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/front_rgbd/gyro/sample'],
             description='Name of the gyro topic.')
     )
 
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_imu_in',
-            default_value=['/uav5/rgbd/imu'],
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/front_rgbd/imu'],
             description='Name of the raw IMU input topic.')
     )
 
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_imu_out',
-            default_value=['/', EnvironmentVariable('UAV_NAME'), '/imu_filtered/imu'],
-            description='Name of the filtered IMU output topic.')
-    )
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            'topic_accel_gyro_out',
-            default_value=['/', EnvironmentVariable('UAV_NAME'), '/imu_filtered/accel_gyro'],
-            description='Name of the filtered IMU output topic.')
-    )
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/vio_imu/filtered'],
+            description='Name of the filtered IMU output topic.'))
 
-    # === Recupera argumentos com LaunchConfiguration ===
+    # Initialize arguments
     namespace = LaunchConfiguration('namespace')
-    imu_filter_file = LaunchConfiguration('imu_filter_file')
-    topic_accel = LaunchConfiguration('topic_accel')
-    topic_gyro = LaunchConfiguration('topic_gyro')
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    vins_imu_filter_params_file = LaunchConfiguration('vins_imu_filter_params_file')
+    imu_data_united = LaunchConfiguration('imu_data_united')
+    topic_accel_in = LaunchConfiguration('topic_accel_in')
+    topic_gyro_in = LaunchConfiguration('topic_gyro_in')
     topic_imu_in = LaunchConfiguration('topic_imu_in')
     topic_imu_out = LaunchConfiguration('topic_imu_out')
-    topic_accel_gyro_out = LaunchConfiguration('topic_accel_gyro_out')
 
-    # === Nó Lifecycle ===
-    vins_imu_filter_node = LifecycleNode(
+    # Declare nodes
+    vins_imu_filter_lifecycle_node = LifecycleNode(
         package='laser_vins_imu_filter',
         executable='vins_imu_filter',
         name='vins_imu_filter',
         namespace=namespace,
         output='screen',
-        parameters=[imu_filter_file],
-        remappings=[
-            ('accel_in', topic_accel),
-            ('gyro_in', topic_gyro),
-            ('imu_in', topic_imu_in),
-            ('imu_out', topic_imu_out),
-            ('accel_gyro_out', topic_accel_gyro_out),
-        ]
-    )
+        parameters=[vins_imu_filter_params_file,
+                    {'imu_data_united': imu_data_united,
+                     'use_sim_time': use_sim_time}],
+        remappings=[('accel_in', topic_accel_in),
+                    ('gyro_in', topic_gyro_in),
+                    ('imu_in', topic_imu_in),
+                    ('imu_out', topic_imu_out)])
 
-    # === Eventos para configurar e ativar automaticamente ===
-    event_handlers = [
-        RegisterEventHandler(
-            OnProcessStart(
-                target_action=vins_imu_filter_node,
-                on_start=[
-                    EmitEvent(event=ChangeState(
-                        lifecycle_node_matcher=matches_action(vins_imu_filter_node),
-                        transition_id=lifecycle_msgs.msg.Transition.TRANSITION_CONFIGURE,
-                    )),
-                ]
-            )
-        ),
-        RegisterEventHandler(
-            OnStateTransition(
-                target_lifecycle_node=vins_imu_filter_node,
-                start_state='configuring',
-                goal_state='inactive',
-                entities=[
-                    EmitEvent(event=ChangeState(
-                        lifecycle_node_matcher=matches_action(vins_imu_filter_node),
-                        transition_id=lifecycle_msgs.msg.Transition.TRANSITION_ACTIVATE,
-                    )),
-                ],
-            )
-        )
-    ]
+    change_to_configure_state_event_handler = RegisterEventHandler(
+        OnProcessStart(
+            target_action=vins_imu_filter_lifecycle_node,
+            on_start=[
+                EmitEvent(event=ChangeState(
+                    lifecycle_node_matcher=matches_action(vins_imu_filter_lifecycle_node),
+                    transition_id=lifecycle_msgs.msg.Transition.TRANSITION_CONFIGURE))]))
 
-    # === Descrição do lançamento ===
-    ld = LaunchDescription()
+    change_to_activate_state_event_handler = RegisterEventHandler(
+        OnStateTransition(
+            target_lifecycle_node=vins_imu_filter_lifecycle_node,
+            start_state='configuring',
+            goal_state='inactive',
+            entities=[
+                EmitEvent(event=ChangeState(
+                    lifecycle_node_matcher=matches_action(vins_imu_filter_lifecycle_node),
+                    transition_id=lifecycle_msgs.msg.Transition.TRANSITION_ACTIVATE))]))
 
-    for arg in declared_arguments:
-        ld.add_action(arg)
-
-    ld.add_action(vins_imu_filter_node)
-
-    for handler in event_handlers:
-        ld.add_action(handler)
-
-    return ld
+    return LaunchDescription(declared_arguments + [vins_imu_filter_lifecycle_node,
+                                                   change_to_configure_state_event_handler,
+                                                   change_to_activate_state_event_handler])

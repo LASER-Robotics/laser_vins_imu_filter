@@ -2,7 +2,7 @@ import os
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, RegisterEventHandler, EmitEvent
-from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, PythonExpression
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, PythonExpression, EnvironmentVariable
 from launch_ros.actions import LifecycleNode
 from launch_ros.substitutions import FindPackageShare
 from launch.events import matches_action
@@ -43,26 +43,29 @@ def generate_launch_description():
 
     declared_arguments.append(
         DeclareLaunchArgument(
-            'topic_accel_in',
-            default_value=['/', os.getenv('UAV_NAME', "uav1"), '/accel/sample'],
-            description='Name of the accel topic.'))
+            'topic_accel',
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/px4_api/accel/sample'],
+            description='Name of the accel topic.')
+    )
 
     declared_arguments.append(
         DeclareLaunchArgument(
-            'topic_gyro_in',
-            default_value=['/', os.getenv('UAV_NAME', "uav1"), '/gyro/sample'],
-            description='Name of the gyro topic.'))
+            'topic_gyro',
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/px4_api/gyro/sample'],
+            description='Name of the gyro topic.')
+    )
 
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_imu_in',
-            default_value=['/', os.getenv('UAV_NAME', "uav1"), '/px4_api/imu'],
-            description='Name of the raw IMU input topic.'))
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/px4_api/imu'],
+            description='Name of the raw IMU input topic.')
+    )
 
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_imu_out',
-            default_value=['/', os.getenv('UAV_NAME', "uav1"), '/px4_api/imu/filtered'],
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/px4_api/imu/filtered'],
             description='Name of the filtered IMU output topic.'))
 
     # Initialize arguments

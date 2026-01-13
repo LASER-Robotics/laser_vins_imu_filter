@@ -32,7 +32,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'vins_imu_filter_params_file',
             default_value=PathJoinSubstitution([FindPackageShare('laser_vins_imu_filter'),
-                                                'params', 'rs_d435i.yaml']),
+                                                'params', 'livox_mid360.yaml']),
             description='Full path to the file with the parameters.'))
 
     declared_arguments.append(
@@ -44,25 +44,25 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_accel_in',
-            default_value=['/', os.getenv('UAV_NAME', "uav1"), '/rgbd/accel/sample'],
+            default_value=['/', os.getenv('UAV_NAME', "uav1"), '/livox/accel/sample'],
             description='Name of the accel topic.'))
 
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_gyro_in',
-            default_value=['/', os.getenv('UAV_NAME', "uav1"), '/rgbd/gyro/sample'],
+            default_value=['/', os.getenv('UAV_NAME', "uav1"), '/livox/gyro/sample'],
             description='Name of the gyro topic.'))
 
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_imu_in',
-            default_value=['/', os.getenv('UAV_NAME', "uav1"), '/rgbd/imu'],
+            default_value=['/', os.getenv('UAV_NAME', "uav1"), '/livox/imu'],
             description='Name of the raw IMU input topic.'))
 
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_imu_out',
-            default_value=['/', os.getenv('UAV_NAME', "uav1"), '/vio_imu/filtered'],
+            default_value=['/', os.getenv('UAV_NAME', "uav1"), '/livox/imu/filtered'],
             description='Name of the filtered IMU output topic.'))
 
     # Initialize arguments
@@ -79,7 +79,7 @@ def generate_launch_description():
     vins_imu_filter_lifecycle_node = LifecycleNode(
         package='laser_vins_imu_filter',
         executable='vins_imu_filter',
-        name='vins_imu_filter',
+        name='fast_imu_filter',
         namespace=namespace,
         output='screen',
         parameters=[vins_imu_filter_params_file,
