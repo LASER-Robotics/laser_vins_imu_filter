@@ -58,7 +58,7 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_imu_in',
-            default_value=['/', EnvironmentVariable('UAV_NAME'), '/px4_api/imu_BAG'],
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/px4_api/imu'],
             description='Name of the raw IMU input topic.')
     )
 
