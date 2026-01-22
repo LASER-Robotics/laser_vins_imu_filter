@@ -43,14 +43,14 @@ def generate_launch_description():
 
     declared_arguments.append(
         DeclareLaunchArgument(
-            'topic_accel',
+            'topic_accel_in',
             default_value=['/', EnvironmentVariable('UAV_NAME'), '/px4_api/accel/sample'],
             description='Name of the accel topic.')
     )
 
     declared_arguments.append(
         DeclareLaunchArgument(
-            'topic_gyro',
+            'topic_gyro_in',
             default_value=['/', EnvironmentVariable('UAV_NAME'), '/px4_api/gyro/sample'],
             description='Name of the gyro topic.')
     )
@@ -58,14 +58,14 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_imu_in',
-            default_value=['/', EnvironmentVariable('UAV_NAME'), '/px4_api/imu'],
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/px4_api/imu_BAG'],
             description='Name of the raw IMU input topic.')
     )
 
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_imu_out',
-            default_value=['/', EnvironmentVariable('UAV_NAME'), '/px4_api/imu/filtered'],
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/px4_api/filtered/imu'],
             description='Name of the filtered IMU output topic.'))
 
     # Initialize arguments

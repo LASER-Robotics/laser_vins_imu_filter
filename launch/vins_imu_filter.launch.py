@@ -43,14 +43,14 @@ def generate_launch_description():
 
     declared_arguments.append(
         DeclareLaunchArgument(
-            'topic_accel',
+            'topic_accel_in',
             default_value=['/', EnvironmentVariable('UAV_NAME'), '/front_rgbd/accel/sample'],
             description='Name of the accel topic.')
     )
 
     declared_arguments.append(
         DeclareLaunchArgument(
-            'topic_gyro',
+            'topic_gyro_in',
             default_value=['/', EnvironmentVariable('UAV_NAME'), '/front_rgbd/gyro/sample'],
             description='Name of the gyro topic.')
     )
