@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>laser_vins_imu_filter</name>
+  <name>laser_uav_imu_filter</name>
   <version>1.0.0</version>
-  <description>Filtro IMU para dados VINS com opções de filtro IIR e Notch.</description>
+  <description>.</description>
 
   <author email="wagnergarcia@eng.ci.ufpb.br">wagnerdgarcia</author>
   <maintainer email="wagnergarcia@eng.ci.ufpb.br">wagnerdgarcia</maintainer>

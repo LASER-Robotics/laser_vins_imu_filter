@@ -2,19 +2,19 @@
 
 /**
  * @file main.cpp
- * @brief Ponto de entrada para o nó VINS IMU Filter.
+ * @brief Ponto de entrada para o nó IMU Filter.
  *
  * Este arquivo contém a função principal responsável por inicializar o nó ROS2, criar uma instância
- * do `VinsImuFilter`, e executar a lógica associada à classe.
+ * do `ImuFilter`, e executar a lógica associada à classe.
  */
 
 #include <rclcpp/rclcpp.hpp>                         // Biblioteca ROS2 para comunicação.
-#include <laser_vins_imu_filter/vins_imu_filter.hpp> // Classe VinsImuFilter.
+#include <laser_uav_imu_filter/imu_filter_node.hpp> // Classe ImuFilter.
 
 /**
  * @brief Função principal do programa.
  *
- * A função inicializa o sistema ROS2, cria uma instância da classe `VinsImuFilter`,
+ * A função inicializa o sistema ROS2, cria uma instância da classe `ImuFilter`,
  * e executa o loop principal até que o nó seja encerrado.
  *
  * @param argc Número de argumentos passados na linha de comando.
@@ -25,8 +25,8 @@ int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv); // Inicializa o sistema ROS2.
 
-    // Cria uma instância do VinsImuFilter como um nó ROS2 gerenciado.
-    auto node = std::make_shared<vins_imu_filter::VinsImuFilter>();
+    // Cria uma instância do ImuFilter como um nó ROS2 gerenciado.
+    auto node = std::make_shared<laser_uav_imu_filter::ImuFilterNode>();
 
     // Inicia o loop principal do nó utilizando a interface base do nó.
     rclcpp::spin(node->get_node_base_interface());

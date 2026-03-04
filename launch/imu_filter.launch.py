@@ -30,8 +30,8 @@ def generate_launch_description():
 
     declared_arguments.append(
         DeclareLaunchArgument(
-            'vins_imu_filter_params_file',
-            default_value=PathJoinSubstitution([FindPackageShare('laser_vins_imu_filter'),
+            'imu_filter_params_file',
+            default_value=PathJoinSubstitution([FindPackageShare('laser_uav_imu_filter'),
                                                 'params', 'rs_d435i.yaml']),
             description='Full path to the file with the parameters.'))
 
@@ -68,7 +68,7 @@ def generate_launch_description():
     # Initialize arguments
     namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
-    vins_imu_filter_params_file = LaunchConfiguration('vins_imu_filter_params_file')
+    imu_filter_params_file = LaunchConfiguration('imu_filter_params_file')
     imu_data_united = LaunchConfiguration('imu_data_united')
     topic_accel_in = LaunchConfiguration('topic_accel_in')
     topic_gyro_in = LaunchConfiguration('topic_gyro_in')
@@ -76,13 +76,13 @@ def generate_launch_description():
     topic_imu_out = LaunchConfiguration('topic_imu_out')
 
     # Declare nodes
-    vins_imu_filter_lifecycle_node = LifecycleNode(
-        package='laser_vins_imu_filter',
-        executable='vins_imu_filter',
-        name='vins_imu_filter',
+    imu_filter_lifecycle_node = LifecycleNode(
+        package='laser_uav_imu_filter',
+        executable='imu_filter',
+        name='imu_filter',
         namespace=namespace,
         output='screen',
-        parameters=[vins_imu_filter_params_file,
+        parameters=[imu_filter_params_file,
                     {'imu_data_united': imu_data_united,
                      'use_sim_time': use_sim_time}],
         remappings=[('accel_in', topic_accel_in),
@@ -92,22 +92,22 @@ def generate_launch_description():
 
     change_to_configure_state_event_handler = RegisterEventHandler(
         OnProcessStart(
-            target_action=vins_imu_filter_lifecycle_node,
+            target_action=imu_filter_lifecycle_node,
             on_start=[
                 EmitEvent(event=ChangeState(
-                    lifecycle_node_matcher=matches_action(vins_imu_filter_lifecycle_node),
+                    lifecycle_node_matcher=matches_action(imu_filter_lifecycle_node),
                     transition_id=lifecycle_msgs.msg.Transition.TRANSITION_CONFIGURE))]))
 
     change_to_activate_state_event_handler = RegisterEventHandler(
         OnStateTransition(
-            target_lifecycle_node=vins_imu_filter_lifecycle_node,
+            target_lifecycle_node=imu_filter_lifecycle_node,
             start_state='configuring',
             goal_state='inactive',
             entities=[
                 EmitEvent(event=ChangeState(
-                    lifecycle_node_matcher=matches_action(vins_imu_filter_lifecycle_node),
+                    lifecycle_node_matcher=matches_action(imu_filter_lifecycle_node),
                     transition_id=lifecycle_msgs.msg.Transition.TRANSITION_ACTIVATE))]))
 
-    return LaunchDescription(declared_arguments + [vins_imu_filter_lifecycle_node,
+    return LaunchDescription(declared_arguments + [imu_filter_lifecycle_node,
                                                    change_to_configure_state_event_handler,
                                                    change_to_activate_state_event_handler])

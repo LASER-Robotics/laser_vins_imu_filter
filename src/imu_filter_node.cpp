@@ -1,11 +1,11 @@
-#include <laser_vins_imu_filter/vins_imu_filter.hpp>
+#include <laser_uav_imu_filter/imu_filter_node.hpp>
 
-namespace vins_imu_filter
+namespace laser_uav_imu_filter
 {
 
-/* VinsImuFilter() //{ */
-VinsImuFilter::VinsImuFilter(const rclcpp::NodeOptions &options) : rclcpp_lifecycle::LifecycleNode("vins_imu_filter", "", options) {
-  RCLCPP_INFO(get_logger(), "Creating VINS IMU Filter Node");
+/* ImuFilterNode() //{ */
+ImuFilterNode::ImuFilterNode(const rclcpp::NodeOptions &options) : rclcpp_lifecycle::LifecycleNode("imu_filter", "", options) {
+  RCLCPP_INFO(get_logger(), "Creating IMU Filter Node");
 
   declare_parameter("accelerometer.iir_filter.enable", rclcpp::ParameterValue(false));
   declare_parameter("accelerometer.iir_filter.a", rclcpp::ParameterValue(std::vector<double>{}));
@@ -27,19 +27,19 @@ VinsImuFilter::VinsImuFilter(const rclcpp::NodeOptions &options) : rclcpp_lifecy
 
   declare_parameter("imu_data_united", rclcpp::ParameterValue(false));
 
-  RCLCPP_INFO(get_logger(), "VINS IMU Filter Node initialized.");
+  RCLCPP_INFO(get_logger(), "IMU Filter Node initialized.");
 }
 /*//}*/
 
-/* ~VinsImuFilter() //{ */
-VinsImuFilter::~VinsImuFilter() {
-  RCLCPP_INFO(get_logger(), "Destroying VINS IMU Filter Node");
+/* ~ImuFilterNode() //{ */
+ImuFilterNode::~ImuFilterNode() {
+  RCLCPP_INFO(get_logger(), "Destroying IMU Filter Node");
 }
 /*//}*/
 
 /* on_configure() //{ */
-CallbackReturn VinsImuFilter::on_configure(const rclcpp_lifecycle::State &) {
-  RCLCPP_INFO(get_logger(), "Configuring VINS IMU Filter Node...");
+CallbackReturn ImuFilterNode::on_configure(const rclcpp_lifecycle::State &) {
+  RCLCPP_INFO(get_logger(), "Configuring IMU Filter Node...");
 
   getParameters();
   configPubSub();
@@ -48,38 +48,38 @@ CallbackReturn VinsImuFilter::on_configure(const rclcpp_lifecycle::State &) {
 
   is_initialized_ = true;
 
-  RCLCPP_INFO(get_logger(), "VINS IMU Filter Node configured.");
+  RCLCPP_INFO(get_logger(), "IMU Filter Node configured.");
   return CallbackReturn::SUCCESS;
 }
 /*//}*/
 
 /* on_activate() //{ */
-CallbackReturn VinsImuFilter::on_activate(const rclcpp_lifecycle::State &) {
-  RCLCPP_INFO(get_logger(), "Activating VINS IMU Filter Node...");
+CallbackReturn ImuFilterNode::on_activate(const rclcpp_lifecycle::State &) {
+  RCLCPP_INFO(get_logger(), "Activating IMU Filter Node...");
 
   // Activate publishers (if any)
   pub_imu_->on_activate();
 
-  RCLCPP_INFO(get_logger(), "VINS IMU Filter Node activated.");
+  RCLCPP_INFO(get_logger(), "IMU Filter Node activated.");
   return CallbackReturn::SUCCESS;
 }
 /*//}*/
 
 /* on_deactivate() //{ */
-CallbackReturn VinsImuFilter::on_deactivate(const rclcpp_lifecycle::State &) {
-  RCLCPP_INFO(get_logger(), "Deactivating VINS IMU Filter Node...");
+CallbackReturn ImuFilterNode::on_deactivate(const rclcpp_lifecycle::State &) {
+  RCLCPP_INFO(get_logger(), "Deactivating IMU Filter Node...");
 
   // Deactivate publishers (if any)
   pub_imu_->on_deactivate();
 
-  RCLCPP_INFO(get_logger(), "VINS IMU Filter Node deactivated.");
+  RCLCPP_INFO(get_logger(), "IMU Filter Node deactivated.");
   return CallbackReturn::SUCCESS;
 }
 /*//}*/
 
 /* on_cleanup() //{ */
-CallbackReturn VinsImuFilter::on_cleanup(const rclcpp_lifecycle::State &) {
-  RCLCPP_INFO(get_logger(), "Cleaning up VINS IMU Filter Node...");
+CallbackReturn ImuFilterNode::on_cleanup(const rclcpp_lifecycle::State &) {
+  RCLCPP_INFO(get_logger(), "Cleaning up IMU Filter Node...");
 
   // Reset publishers
   pub_imu_.reset();
@@ -92,20 +92,20 @@ CallbackReturn VinsImuFilter::on_cleanup(const rclcpp_lifecycle::State &) {
     sub_accel_.reset();
   }
 
-  RCLCPP_INFO(get_logger(), "VINS IMU Filter Node cleaned up.");
+  RCLCPP_INFO(get_logger(), "IMU Filter Node cleaned up.");
   return CallbackReturn::SUCCESS;
 }
 /*//}*/
 
 /* on_shutdown() //{ */
-CallbackReturn VinsImuFilter::on_shutdown(const rclcpp_lifecycle::State &) {
-  RCLCPP_INFO(get_logger(), "Shutting down VINS IMU Filter Node...");
+CallbackReturn ImuFilterNode::on_shutdown(const rclcpp_lifecycle::State &) {
+  RCLCPP_INFO(get_logger(), "Shutting down IMU Filter Node...");
   return CallbackReturn::SUCCESS;
 }
 /*//}*/
 
 /* getParameters() //{ */
-void VinsImuFilter::getParameters() {
+void ImuFilterNode::getParameters() {
   RCLCPP_INFO(get_logger(), "Getting filter parameters...");
 
   // Accelerometer IIR Filter
@@ -191,18 +191,18 @@ void VinsImuFilter::getParameters() {
 /*//}*/
 
 /* configPubSub() //{ */
-void VinsImuFilter::configPubSub() {
+void ImuFilterNode::configPubSub() {
   RCLCPP_INFO(get_logger(), "Configuring publishers and subscribers...");
 
   if (_imu_data_united_) {
     sub_imu_ = create_subscription<sensor_msgs::msg::Imu>("imu_in", rclcpp::QoS(10).best_effort(),
-                                                          std::bind(&VinsImuFilter::subImuCallback, this, std::placeholders::_1));
+                                                          std::bind(&ImuFilterNode::subImuCallback, this, std::placeholders::_1));
   } else {
     sub_gyro_ = create_subscription<sensor_msgs::msg::Imu>("gyro_in", rclcpp::QoS(10).best_effort(),
-                                                           std::bind(&VinsImuFilter::subGyroCallback, this, std::placeholders::_1));
+                                                           std::bind(&ImuFilterNode::subGyroCallback, this, std::placeholders::_1));
 
     sub_accel_ = create_subscription<sensor_msgs::msg::Imu>("accel_in", rclcpp::QoS(10).best_effort(),
-                                                            std::bind(&VinsImuFilter::subAccelCallback, this, std::placeholders::_1));
+                                                            std::bind(&ImuFilterNode::subAccelCallback, this, std::placeholders::_1));
   }
 
   pub_imu_ = create_publisher<sensor_msgs::msg::Imu>("imu_out", 10);
@@ -212,7 +212,7 @@ void VinsImuFilter::configPubSub() {
 /*//}*/
 
 /* configTimers() //{ */
-void VinsImuFilter::configTimers() {
+void ImuFilterNode::configTimers() {
   RCLCPP_INFO(get_logger(), "Configuring timers...");
   // Add any timers you need here
   RCLCPP_INFO(get_logger(), "Timers configured.");
@@ -220,7 +220,7 @@ void VinsImuFilter::configTimers() {
 /*//}*/
 
 /* initializeFilter() //{ */
-void VinsImuFilter::initializeFilter() {
+void ImuFilterNode::initializeFilter() {
   RCLCPP_INFO(get_logger(), "Initializing IMU filter...");
 
   Eigen::MatrixXd acc_notch_freq_matrix;
@@ -248,7 +248,7 @@ void VinsImuFilter::initializeFilter() {
 /*//}*/
 
 /* subImuCallback() //{ */
-void VinsImuFilter::subImuCallback(const sensor_msgs::msg::Imu::SharedPtr msg) {
+void ImuFilterNode::subImuCallback(const sensor_msgs::msg::Imu::SharedPtr msg) {
   if (!is_initialized_) {
     RCLCPP_WARN_ONCE(get_logger(), "IMU Filter not fully initialized yet.");
     return;
@@ -280,7 +280,7 @@ void VinsImuFilter::subImuCallback(const sensor_msgs::msg::Imu::SharedPtr msg) {
  *          The filtered message is published at a rate of 1 Hz.
  */
 /* subAccelCallback() //{ */
-void VinsImuFilter::subAccelCallback(const sensor_msgs::msg::Imu::SharedPtr msg) {
+void ImuFilterNode::subAccelCallback(const sensor_msgs::msg::Imu::SharedPtr msg) {
   if (!is_initialized_) {
     RCLCPP_WARN_ONCE(get_logger(), "IMU Filter not fully initialized yet.");
     return;
@@ -316,7 +316,7 @@ void VinsImuFilter::subAccelCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
  * @warning This function assumes that the IMU filter is fully initialized.
  */
 /* subGyroCallback() //{ */
-void VinsImuFilter::subGyroCallback(const sensor_msgs::msg::Imu::SharedPtr msg) {
+void ImuFilterNode::subGyroCallback(const sensor_msgs::msg::Imu::SharedPtr msg) {
   if (!is_initialized_) {
     RCLCPP_WARN_ONCE(get_logger(), "IMU Filter not fully initialized yet.");
     return;
@@ -349,7 +349,7 @@ void VinsImuFilter::subGyroCallback(const sensor_msgs::msg::Imu::SharedPtr msg) 
 }
 /*//}*/
 
-laser_uav_lib::ImuData VinsImuFilter::convertToImuData(const sensor_msgs::msg::Imu &imu_msg) {
+laser_uav_lib::ImuData ImuFilterNode::convertToImuData(const sensor_msgs::msg::Imu &imu_msg) {
   laser_uav_lib::ImuData imu_data;
 
   imu_data.orientation[0] = imu_msg.orientation.x;
@@ -382,7 +382,7 @@ laser_uav_lib::ImuData VinsImuFilter::convertToImuData(const sensor_msgs::msg::I
   return imu_data;
 }
 
-sensor_msgs::msg::Imu VinsImuFilter::convertToSensorMsg(const laser_uav_lib::ImuData &imu_data) {
+sensor_msgs::msg::Imu ImuFilterNode::convertToSensorMsg(const laser_uav_lib::ImuData &imu_data) {
   sensor_msgs::msg::Imu imu_msg;
 
   // Configurar cabeçalho
@@ -417,4 +417,4 @@ sensor_msgs::msg::Imu VinsImuFilter::convertToSensorMsg(const laser_uav_lib::Imu
   return imu_msg;
 }
 
-}  // namespace vins_imu_filter
+}  // namespace imu_filter

@@ -1,5 +1,5 @@
-#ifndef VINS_IMU_FILTER_HPP
-#define VINS_IMU_FILTER_HPP
+#ifndef LASER_UAV_IMU_FILTER__IMU_FILTER_NODE_HPP
+#define LASER_UAV_IMU_FILTER__IMU_FILTER_NODE_HPP
 
 #include <memory>
 #include <mutex>
@@ -17,16 +17,16 @@
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
-namespace vins_imu_filter
+namespace laser_uav_imu_filter
 {
-class VinsImuFilter : public rclcpp_lifecycle::LifecycleNode {
+class ImuFilterNode : public rclcpp_lifecycle::LifecycleNode {
 public:
-  /* VinsImuFilter() //{ */
-  explicit VinsImuFilter(const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
+  /* ImuFilterNode() //{ */
+  explicit ImuFilterNode(const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
   /*//}*/
 
-  /* ~VinsImuFilter() //{ */
-  ~VinsImuFilter() override;
+  /* ~ImuFilterNode() //{ */
+  ~ImuFilterNode() override;
   /*//}*/
 
 private:
@@ -129,6 +129,6 @@ private:
   /*//}*/
 };
 
-}  // namespace vins_imu_filter
+}  // namespace imu_filter
 
-#endif  // VINS_IMU_FILTER_HPP
+#endif  // LASER_UAV_IMU_FILTER__IMU_FILTER_NODE_HPP

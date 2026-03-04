@@ -1,6 +1,6 @@
-# LASER VINS IMU Filter
+# LASER UAV IMU Filter
 
-This package provides a **ROS 2 lifecycle node** responsible for conditioning and filtering IMU data before it is fed into Visual-Inertial Odometry (VIO) systems like VINS-Fusion.
+This package provides a **ROS 2 lifecycle node** responsible for conditioning and filtering IMU data.
 
 ## Overview
 
@@ -13,7 +13,7 @@ The main objective of this package is to improve the quality of raw IMU measurem
 
 ## Provided Nodes
 
-### 1. `vins_imu_filter`
+### 1. `imu_filter`
 -   **Description:** This node subscribes to raw IMU topics, applies the configured filters using the `laser_uav_lib` filtering library, and republishes the clean data.
 
 -   **Subscribed Topics:**
@@ -26,11 +26,11 @@ The main objective of this package is to improve the quality of raw IMU measurem
 
 -   **Published Topics:**
     -   `imu_out` (`sensor_msgs/msg/Imu`):
-        The filtered and time-synchronized IMU data ready for the VIO estimator.
+        The filtered and time-synchronized IMU data.
 
 -   **Configurable Parameters:**
     ```yaml
-    vins_imu_filter:
+    imu_filter:
       ros__parameters:
         # Input Data Configuration
         # Set to true if accel and gyro arrive on the same topic ('imu_in')
