@@ -26,7 +26,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'imu_filter_file',
             default_value=PathJoinSubstitution([
-                FindPackageShare('laser_vins_imu_filter'),
+                FindPackageShare('laser_uav_imu_filter'),
                 'params', 'imu_filter.yaml']),
             description='Full path to the file with the imu_filter parameters.'
         )
@@ -76,10 +76,10 @@ def generate_launch_description():
     topic_accel_gyro_out = LaunchConfiguration('topic_accel_gyro_out')
 
     # === Nó Lifecycle ===
-    vins_imu_filter_node = LifecycleNode(
-        package='laser_vins_imu_filter',
-        executable='vins_imu_filter',
-        name='vins_imu_filter',
+    imu_filter_node = LifecycleNode(
+        package='laser_uav_imu_filter',
+        executable='imu_filter',
+        name='imu_filter',
         namespace=namespace,
         output='screen',
         parameters=[imu_filter_file],
@@ -96,10 +96,10 @@ def generate_launch_description():
     event_handlers = [
         RegisterEventHandler(
             OnProcessStart(
-                target_action=vins_imu_filter_node,
+                target_action=imu_filter_node,
                 on_start=[
                     EmitEvent(event=ChangeState(
-                        lifecycle_node_matcher=matches_action(vins_imu_filter_node),
+                        lifecycle_node_matcher=matches_action(imu_filter_node),
                         transition_id=lifecycle_msgs.msg.Transition.TRANSITION_CONFIGURE,
                     )),
                 ]
@@ -107,12 +107,12 @@ def generate_launch_description():
         ),
         RegisterEventHandler(
             OnStateTransition(
-                target_lifecycle_node=vins_imu_filter_node,
+                target_lifecycle_node=imu_filter_node,
                 start_state='configuring',
                 goal_state='inactive',
                 entities=[
                     EmitEvent(event=ChangeState(
-                        lifecycle_node_matcher=matches_action(vins_imu_filter_node),
+                        lifecycle_node_matcher=matches_action(imu_filter_node),
                         transition_id=lifecycle_msgs.msg.Transition.TRANSITION_ACTIVATE,
                     )),
                 ],
@@ -126,7 +126,7 @@ def generate_launch_description():
     for arg in declared_arguments:
         ld.add_action(arg)
 
-    ld.add_action(vins_imu_filter_node)
+    ld.add_action(imu_filter_node)
 
     for handler in event_handlers:
         ld.add_action(handler)
