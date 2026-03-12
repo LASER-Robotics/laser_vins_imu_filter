@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(laser_vins_imu_filter)
+project(laser_uav_imu_filter)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -43,16 +43,16 @@ include_directories(
 )
 
 # Create the executable
-set(executable_name vins_imu_filter)
+set(executable_name imu_filter)
 
 add_executable(${executable_name}
-  src/vins_imu_filter.cpp
+  src/imu_filter_main.cpp
 )
 
 # Create the component library
-set(library_name vins_imu_filter_node)
+set(library_name imu_filter_node)
 add_library(${library_name} SHARED
-  src/vins_imu_filter_node.cpp
+  src/imu_filter_node.cpp
 )
 
 # Link dependencies to both executable and library
@@ -70,7 +70,7 @@ target_link_libraries(${executable_name}
 )
 
 # Register the component
-rclcpp_components_register_nodes(${library_name} "vins_imu_filter::VinsImuFilter")
+rclcpp_components_register_nodes(${library_name} "imu_filter::ImuFilter")
 
 install(TARGETS ${library_name} ${executable_name}
   ARCHIVE DESTINATION lib
