@@ -1,0 +1,29 @@
+/**/**:
+  ros__parameters:
+    accelerometer:
+      iir_filter:
+        enable: true
+        # butterworth low-pass, 2nd order, 250 Hz sampling frequency, 10 Hz cutoff frequency
+        a: [1.0, -1.7172, 0.7525]
+        b: [8.8261e-03, 1.7652e-02, 8.8261e-03]
+        
+      notch_filter:
+        enable: true
+        sample_rate: 250 # [Hz]
+        frequencies: [83] # [Hz]
+        bandwidth: 30 # [Hz]
+
+    gyro:
+      iir_filter:
+        enable: true
+        # butterworth low-pass, 2nd order, 250 Hz sampling frequency, 10 Hz cutoff frequency
+        a: [1.0, -1.7172, 0.7525]
+        b: [8.8261e-03, 1.7652e-02, 8.8261e-03]
+
+      notch_filter:
+        enable: true
+        sample_rate: 250 # [Hz]
+        frequencies: [83] # [Hz]
+        bandwidth: 30 # [Hz]
+    
+    imu_data_united: true

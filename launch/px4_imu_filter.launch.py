@@ -32,7 +32,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'imu_filter_params_file',
             default_value=PathJoinSubstitution([FindPackageShare('laser_uav_imu_filter'),
-                                                'params', 'rs_d435i.yaml']),
+                                                'params', 'px4_api.yaml']),
             description='Full path to the file with the parameters.'))
 
     declared_arguments.append(
@@ -44,28 +44,28 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_accel_in',
-            default_value=['/', EnvironmentVariable('UAV_NAME'), '/front_rgbd/accel/sample'],
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/px4_api/accel/sample'],
             description='Name of the accel topic.')
     )
 
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_gyro_in',
-            default_value=['/', EnvironmentVariable('UAV_NAME'), '/front_rgbd/gyro/sample'],
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/px4_api/gyro/sample'],
             description='Name of the gyro topic.')
     )
 
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_imu_in',
-            default_value=['/', EnvironmentVariable('UAV_NAME'), '/front_rgbd/imu'],
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/px4_api/imu'],
             description='Name of the raw IMU input topic.')
     )
 
     declared_arguments.append(
         DeclareLaunchArgument(
             'topic_imu_out',
-            default_value=['/', EnvironmentVariable('UAV_NAME'), '/vio_imu/filtered'],
+            default_value=['/', EnvironmentVariable('UAV_NAME'), '/px4_api/filtered/imu'],
             description='Name of the filtered IMU output topic.'))
 
     # Initialize arguments
@@ -82,7 +82,7 @@ def generate_launch_description():
     imu_filter_lifecycle_node = LifecycleNode(
         package='laser_uav_imu_filter',
         executable='imu_filter',
-        name='imu_filter',
+        name='px4_imu_filter',
         namespace=namespace,
         output='screen',
         parameters=[imu_filter_params_file,
